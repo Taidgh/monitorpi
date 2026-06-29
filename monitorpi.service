@@ -1,0 +1,23 @@
+# ── MonitorPi systemd service template ────────────────────────────────────
+# This file is a TEMPLATE. The install.sh script generates the real service
+# file with correct User=, WorkingDirectory=, ExecStart= and Environment=
+# values for your system. Do not use this file directly.
+#
+# To install manually, run:   sudo bash install.sh
+# ──────────────────────────────────────────────────────────────────────────
+[Unit]
+Description=MonitorPi Camera System
+After=network.target
+
+[Service]
+User=YOUR_UID
+WorkingDirectory=/home/YOUR_USER/monitorpi
+Environment=MONITORPI_APP_NAME=MonitorPi
+Environment=MONITORPI_DEVICE_ID=MonitorPi-01
+Environment=MONITORPI_VIDEO_DEV=/dev/video0
+ExecStart=/home/YOUR_USER/monitorpi/.venv/bin/python3 run.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
