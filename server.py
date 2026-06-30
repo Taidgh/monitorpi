@@ -41,8 +41,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
 #   Wildlife : lower DIFF/SCORE  → triggers more easily
 SENSITIVITY_CFG = {
     "peak_delta":     {"val": 30.0, "min": 5.0,  "max": 80.0, "step": 1.0},
-    "diff_threshold": {"val": 25,   "min": 10,   "max": 60,   "step": 1},
-    "motion_score":   {"val": 500,  "min": 100,  "max": 8000, "step": 100},
+    "diff_threshold": {"val": 35,   "min": 20,   "max": 80,   "step": 1},
+    "motion_score":   {"val": 1500, "min": 500,  "max": 12000, "step": 100},
 }
 
 # ── In-memory state ────────────────────────────────────────────────────────

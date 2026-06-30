@@ -24,8 +24,8 @@ PEAK_DELTA       = 30.0   # lightning: 99th-pct brightness spike threshold
 PRE_FLASH_BUF    = 30     # frames before flash
 POST_FLASH_BUF   = 20     # frames after flash
 
-DIFF_THRESHOLD   = 25     # wildlife: pixel diff to count as motion
-MOTION_SCORE     = 500    # wildlife: motion pixel count to trigger
+DIFF_THRESHOLD   = 35     # wildlife: pixel diff to count as motion
+MOTION_SCORE     = 1500   # wildlife: motion pixel count to trigger
 
 # Buffers
 PRE_WILDLIFE_BUF = 15     # frames before motion
@@ -324,3 +324,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+
