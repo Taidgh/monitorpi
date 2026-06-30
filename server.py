@@ -6,6 +6,7 @@ so the installer can configure them without editing this file.
 """
 
 import io
+import json
 import os
 import time
 import zipfile
@@ -56,6 +57,59 @@ _state: dict = {
     "start_time": time.time(),
     "sensitivity": {k: v["val"] for k, v in SENSITIVITY_CFG.items()},
 }
+
+# ── Persistent config (survives reboots) ───────────────────────────────────
+# Stored in data/ so it's never wiped by reinstalls and isn't lost with the
+# rest of the application code; only the captured images directory is bigger.
+CONFIG_PATH = DATA_ROOT / "config.json"
+
+
+def _load_config():
+    """Load persisted mode + sensitivity from disk, if present."""
+    if not CONFIG_PATH.exists():
+        return
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            saved = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"[server] Could not read {CONFIG_PATH}: {e}")
+        return
+
+    if saved.get("mode") in ("lightning", "wildlife"):
+        _state["mode"] = saved["mode"]
+
+    saved_sens = saved.get("sensitivity", {})
+    for key, cfg in SENSITIVITY_CFG.items():
+        if key in saved_sens:
+            val = saved_sens[key]
+            # Clamp to current configured range in case ranges changed since save
+            try:
+                clamped = max(cfg["min"], min(cfg["max"], val))
+                _state["sensitivity"][key] = clamped
+            except TypeError:
+                pass
+
+    print(f"[server] Loaded saved config: mode={_state['mode']}, "
+          f"sensitivity={_state['sensitivity']}")
+
+
+def _save_config():
+    """Persist mode + sensitivity to disk so they survive reboots."""
+    DATA_ROOT.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "mode": _state["mode"],
+        "sensitivity": _state["sensitivity"],
+    }
+    try:
+        tmp_path = CONFIG_PATH.with_suffix(".json.tmp")
+        with open(tmp_path, "w") as f:
+            json.dump(payload, f, indent=2)
+        tmp_path.replace(CONFIG_PATH)  # atomic write
+    except OSError as e:
+        print(f"[server] Could not save {CONFIG_PATH}: {e}")
+
+
+_load_config()
 
 
 def _device_dir(device_id: str) -> Path:
@@ -181,6 +235,7 @@ async def set_mode(body: ModeBody):
     if body.mode not in ("lightning", "wildlife"):
         raise HTTPException(400, "mode must be 'lightning' or 'wildlife'")
     _state["mode"] = body.mode
+    _save_config()
     return {"mode": _state["mode"]}
 
 
@@ -219,6 +274,7 @@ async def set_sensitivity(body: SensitivityBody):
         s["motion_score"] = max(cfg["motion_score"]["min"], min(cfg["motion_score"]["max"], int(body.motion_score)))
     if body.exposure is not None:
         s["exposure"] = max(cfg["exposure"]["min"], min(cfg["exposure"]["max"], int(body.exposure)))
+    _save_config()
     return {"sensitivity": s}
 
 
