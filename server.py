@@ -43,6 +43,8 @@ SENSITIVITY_CFG = {
     "peak_delta":     {"val": 30.0, "min": 5.0,  "max": 80.0, "step": 1.0},
     "diff_threshold": {"val": 35,   "min": 20,   "max": 80,   "step": 1},
     "motion_score":   {"val": 1500, "min": 500,  "max": 12000, "step": 100},
+    # Lightning exposure — V4L2 manual exposure scale (more negative = shorter exposure)
+    "exposure":       {"val": -4,   "min": -11,  "max": -1,   "step": 1},
 }
 
 # ── In-memory state ────────────────────────────────────────────────────────
@@ -190,6 +192,7 @@ class SensitivityBody(BaseModel):
     peak_delta:     float | None = None
     diff_threshold: int   | None = None
     motion_score:   int   | None = None
+    exposure:       int   | None = None
 
 
 @app.get("/api/sensitivity")
@@ -200,6 +203,7 @@ async def get_sensitivity():
         "peak_delta":     {"val": s["peak_delta"],     **{k:v for k,v in cfg["peak_delta"].items()     if k!="val"}},
         "diff_threshold": {"val": s["diff_threshold"], **{k:v for k,v in cfg["diff_threshold"].items() if k!="val"}},
         "motion_score":   {"val": s["motion_score"],   **{k:v for k,v in cfg["motion_score"].items()   if k!="val"}},
+        "exposure":       {"val": s["exposure"],       **{k:v for k,v in cfg["exposure"].items()       if k!="val"}},
     }
 
 
@@ -213,6 +217,8 @@ async def set_sensitivity(body: SensitivityBody):
         s["diff_threshold"] = max(cfg["diff_threshold"]["min"], min(cfg["diff_threshold"]["max"], int(body.diff_threshold)))
     if body.motion_score is not None:
         s["motion_score"] = max(cfg["motion_score"]["min"], min(cfg["motion_score"]["max"], int(body.motion_score)))
+    if body.exposure is not None:
+        s["exposure"] = max(cfg["exposure"]["min"], min(cfg["exposure"]["max"], int(body.exposure)))
     return {"sensitivity": s}
 
 
@@ -678,6 +684,9 @@ function renderSensitivity() {{
     html += _sliderHtml('peak_delta', '⚡ Trigger threshold',
       'Lower = more sensitive (triggers on smaller brightness spikes)',
       s.peak_delta.val, s.peak_delta.min, s.peak_delta.max, s.peak_delta.step);
+    html += _sliderHtml('exposure', '⚡ Exposure time',
+      'More negative = shorter exposure (less light, freezes fast flashes). Less negative = longer exposure (more light, may blow out bright strikes)',
+      s.exposure.val, s.exposure.min, s.exposure.max, s.exposure.step);
   }} else {{
     html += _sliderHtml('diff_threshold', '🌿 Pixel diff threshold',
       'Lower = more sensitive (detects subtler pixel changes)',
@@ -694,6 +703,8 @@ async function applySensitivity() {{
   if (CURRENT_MODE === 'lightning') {{
     const el = document.getElementById('sldr_peak_delta');
     if (el) body.peak_delta = parseFloat(el.value);
+    const ex = document.getElementById('sldr_exposure');
+    if (ex) body.exposure = parseInt(ex.value);
   }} else {{
     const d = document.getElementById('sldr_diff_threshold');
     const m = document.getElementById('sldr_motion_score');

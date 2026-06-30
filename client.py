@@ -27,6 +27,8 @@ POST_FLASH_BUF   = 20     # frames after flash
 DIFF_THRESHOLD   = 35     # wildlife: pixel diff to count as motion
 MOTION_SCORE     = 1500   # wildlife: motion pixel count to trigger
 
+EXPOSURE         = -4     # lightning: V4L2 manual exposure value (negative scale)
+
 # Buffers
 PRE_WILDLIFE_BUF = 15     # frames before motion
 
@@ -90,9 +92,9 @@ def open_camera() -> cv2.VideoCapture:
     return cap
 
 
-def apply_lightning_camera(cap: cv2.VideoCapture):
+def apply_lightning_camera(cap: cv2.VideoCapture, exposure: int = EXPOSURE):
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)   # manual on V4L2
-    cap.set(cv2.CAP_PROP_EXPOSURE, -4)
+    cap.set(cv2.CAP_PROP_EXPOSURE, exposure)
 
 
 def apply_wildlife_camera(cap: cv2.VideoCapture):
@@ -167,10 +169,13 @@ def run():
     # Open camera
     cap = open_camera()
 
-    # Initial mode
+    # Initial mode + sensitivity (so lightning exposure is correct from boot)
     mode = poll_mode()
+    initial_sv = poll_sensitivity()
+    live_exposure = initial_sv.get("exposure", EXPOSURE)
+
     if mode == "lightning":
-        apply_lightning_camera(cap)
+        apply_lightning_camera(cap, live_exposure)
     else:
         apply_wildlife_camera(cap)
 
@@ -200,6 +205,7 @@ def run():
     live_peak_delta     = PEAK_DELTA
     live_diff_threshold = DIFF_THRESHOLD
     live_motion_score   = MOTION_SCORE
+    # live_exposure already set above from initial_sv poll
 
     frame_n = 0
 
@@ -216,7 +222,7 @@ def run():
                 time.sleep(1)
                 cap = open_camera()
                 if mode == "lightning":
-                    apply_lightning_camera(cap)
+                    apply_lightning_camera(cap, live_exposure)
                 else:
                     apply_wildlife_camera(cap)
                 continue
@@ -232,7 +238,7 @@ def run():
                     mode = new_mode
                     print(f"[client] Mode changed → {mode}")
                     if mode == "lightning":
-                        apply_lightning_camera(cap)
+                        apply_lightning_camera(cap, live_exposure)
                     else:
                         apply_wildlife_camera(cap)
                     # Reset detection state
@@ -249,6 +255,13 @@ def run():
                     live_peak_delta     = sv.get("peak_delta",     live_peak_delta)
                     live_diff_threshold = sv.get("diff_threshold", live_diff_threshold)
                     live_motion_score   = sv.get("motion_score",   live_motion_score)
+                    new_exposure = sv.get("exposure", live_exposure)
+                    if mode == "lightning" and new_exposure != live_exposure:
+                        live_exposure = new_exposure
+                        cap.set(cv2.CAP_PROP_EXPOSURE, live_exposure)
+                        print(f"[client] Exposure updated → {live_exposure}")
+                    else:
+                        live_exposure = new_exposure
 
             # ── Poll stream every 2 s ──
             if now - last_stream_poll >= 2:
@@ -324,4 +337,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-
