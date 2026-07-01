@@ -11,13 +11,13 @@ A Raspberry Pi wildlife and lightning camera system with a live web UI.
 
 | | |
 |---|---|
-| 🌿 **Wildlife mode** | Frame-differencing motion detection, light theme |
-| ⚡ **Lightning mode** | 99th-percentile brightness spike detection, dark theme |
-| 📺 **Live MJPEG stream** | Toggle-able live preview in the browser |
-| 🖼️ **Photo gallery** | Events grouped by time, lightbox, multi-select, download zip |
-| 🎚️ **Sensitivity sliders** | Adjust detection thresholds live from the UI |
-| 🔄 **Auto-restart** | Client process auto-restarts on crash; server exit stops everything |
-| 🌐 **mDNS** | Access via `http://<hostname>.local:8000` on your network |
+|  **Wildlife mode** | Frame-differencing motion detection, light theme |
+|  **Lightning mode** | 99th-percentile brightness spike detection, dark theme |
+|  **Live MJPEG stream** | Toggle-able live preview in the browser |
+|  **Photo gallery** | Events grouped by time, lightbox, multi-select, download zip |
+|  **Sensitivity sliders** | Adjust detection thresholds live from the UI |
+|  **Auto-restart** | Client process auto-restarts on crash; server exit stops everything |
+|  **mDNS** | Access via `http://<hostname>.local:8000` on your network |
 
 ---
 
@@ -106,9 +106,9 @@ Adjustable live from the UI sidebar without restarting:
 
 | Setting | Default | Range | Effect |
 |---------|---------|-------|--------|
-| ⚡ Trigger threshold (`peak_delta`) | 30 | 5 – 80 | Lower = triggers on smaller brightness spikes |
-| 🌿 Pixel diff threshold (`diff_threshold`) | 25 | 10 – 60 | Lower = detects subtler pixel changes |
-| 🌿 Motion area threshold (`motion_score`) | 500 | 100 – 8000 | Lower = triggers on smaller movement area |
+|  Trigger threshold (`peak_delta`) | 30 | 5 – 80 | Lower = triggers on smaller brightness spikes |
+|  Pixel diff threshold (`diff_threshold`) | 25 | 10 – 60 | Lower = detects subtler pixel changes |
+|  Motion area threshold (`motion_score`) | 500 | 100 – 8000 | Lower = triggers on smaller movement area |
 
 ---
 
